@@ -1,3 +1,6 @@
+var activeTeam = "";
+var map;
+var users;
 $(function(){
     $.ajax({
         'async': false,
@@ -8,6 +11,8 @@ $(function(){
         success:function(data){
             map = data;
             loadBoard();
+            loadUsers();
+            updateScore();
         }
     });
     $('.unanswered').click(function(){
@@ -29,19 +34,15 @@ $(function(){
             )
         });
         $('#question-modal').modal('show');
-        console.log(category, question);
-        console.log(map[category].questions[question]);
         handleAnswer();
     });
 
 });
-var score = 0;
-var map;
+
 function loadBoard(){
     var board = $('#main-board');
     var columns = map.length;
     var column_width = parseInt(12/columns);
-    console.log(columns);
     $.each(map, function(i,category){
         //load category name
         var header_class = 'text-center col-md-' + column_width;
@@ -63,12 +64,17 @@ function loadBoard(){
             column.append('<div class="well question unanswered" data-question="'+n+'">'+question.value+'</div>')
         });
     });
-    $('.panel-heading').append('<div class="clearfix"></div>')
+    $('.panel-heading').append('<div class="clearfix"></div>');
 
 }
 
 function updateScore(){
-    $('#score').empty().text(score);
+    var lengthUsers = users.length;
+    var output = "";
+    for (var i = 0; i < lengthUsers; i++){
+        output += "Team: " + users[i].name + " Score: " + users[i].score +"</br>";
+    }
+    document.getElementById("score").innerHTML = output;
 }
 
 function handleAnswer(){
@@ -76,9 +82,52 @@ function handleAnswer(){
         var tile= $('div[data-category="'+$(this).data('category')+'"]>[data-question="'+$(this).data('question')+'"]')[0];
         $(tile).empty().removeClass('unanswered').unbind().css('cursor','not-allowed');
         if ($(this).data('correct')){
-            score += parseInt($(this).data('value'));
+            var index;
+            for (var i = 0; i < users.length; i++){
+                if (users[i] === activeTeam){
+                    index = i;
+                    break;
+                }
+            }
+            users[index].score += parseInt($(this).data('value'));
+        }else {
+            setActivTeam();
         }
         $('#question-modal').modal('hide');
-        updateScore();
+        updateScore()
     })
+}
+
+function loadUsers(){
+    $.ajax({
+        'async': false,
+        'global': false,
+        type: 'GET',
+        dataType: 'json',
+        url: 'players.json',
+        success: function (data) {
+            users = data;
+            setActivTeam();
+        }
+    })
+}
+
+function setActivTeam(){
+    if (activeTeam === "") {
+        for (let i = 0; i < users.length; i++) {
+            if (users[i].beginner === true) {
+                activeTeam = users[i];
+            }
+        }
+    }else {
+        var randomNum;
+        for (var j = 0; j < 20; j++){
+            randomNum = Math.floor(Math.random() * users.length);
+            if (users[randomNum].name !== activeTeam.name){
+                activeTeam = users[randomNum];
+                break;
+            }
+        }
+    }
+    document.getElementById("activTeam").innerHTML = activeTeam.name;
 }
