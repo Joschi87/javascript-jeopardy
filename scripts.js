@@ -1,5 +1,6 @@
 var activeTeam = "";
 var map;
+var users;
 $(function(){
     $.ajax({
         'async': false,
@@ -33,8 +34,6 @@ $(function(){
             )
         });
         $('#question-modal').modal('show');
-        //console.log(category, question);
-        //console.log(map[category].questions[question]);
         handleAnswer();
     });
 
@@ -70,9 +69,9 @@ function loadBoard(){
 }
 
 function updateScore(){
-    var lenghtUsers = users.length;
+    var lengthUsers = users.length;
     var output = "";
-    for (var i = 0; i < lenghtUsers; i++){
+    for (var i = 0; i < lengthUsers; i++){
         output += "Team: " + users[i].name + " Score: " + users[i].score +"</br>";
     }
     document.getElementById("score").innerHTML = output;
@@ -83,9 +82,13 @@ function handleAnswer(){
         var tile= $('div[data-category="'+$(this).data('category')+'"]>[data-question="'+$(this).data('question')+'"]')[0];
         $(tile).empty().removeClass('unanswered').unbind().css('cursor','not-allowed');
         if ($(this).data('correct')){
-            var index = users.findIndex(function(item, i){
-                return item.name === activeTeam;
-            });
+            var index;
+            for (var i = 0; i < users.length; i++){
+                if (users[i] === activeTeam){
+                    index = i;
+                    break;
+                }
+            }
             users[index].score += parseInt($(this).data('value'));
         }else {
             setActivTeam();
@@ -126,6 +129,5 @@ function setActivTeam(){
             }
         }
     }
-    console.log(activeTeam);
     document.getElementById("activTeam").innerHTML = activeTeam.name;
 }
